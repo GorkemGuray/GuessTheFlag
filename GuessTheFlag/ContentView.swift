@@ -16,6 +16,9 @@ struct ContentView: View {
     @State private var scoreTitle = ""
     @State private var score = 0
     @State private var correctAnswerText = ""
+    @State private var answerState = false
+    @State private var answerCount = 0
+    @State private var showingGrandResult = false
     
     var body: some View {
         ZStack{
@@ -49,7 +52,7 @@ struct ContentView: View {
                     
                     ForEach(0..<3) { number in
                         Button {
-                            flagTapped(number)
+                            self.answerState = flagTapped(number)
                             
                         } label: {
                             Image(countries[number])
@@ -65,37 +68,58 @@ struct ContentView: View {
             }
             .padding()
         }
+        
         .alert(scoreTitle,isPresented: $showingScore) {
             Button("Continue", action: askQuestion)
         } message: {
-            Text("Your score is \(score)")
+            if answerState {
+                Text("Your score is \(score)")
+            } else {
+                Text("\(correctAnswerText)")
+            }
         }
         
-        .alert(scoreTitle,isPresented: $showingWrongAnswer) {
-            Button("Continue", action: askQuestion)
+        .alert("Finished !", isPresented: $showingGrandResult) {
+            Button("Restart", action: reset)
         } message: {
-            Text("\(correctAnswerText)")
+            Text("Your score is \(score)")
+                .font(.subheadline.weight(.semibold))
         }
+        
     }
     
-    func flagTapped(_ number: Int) {
+    func flagTapped(_ number: Int) -> Bool {
+        answerCount += 1
+        var flagTappedResult = false
+        
         if number == correctAnswer {
             scoreTitle = "Correct"
             score += 1
-           showingScore = true
+            flagTappedResult = true
         } else {
             scoreTitle = "Wrong"
             correctAnswerText = "That is the flag of \(countries[number])"
-            showingWrongAnswer = true
-            
+            flagTappedResult = false
         }
         
-        //showingScore = true
+        if answerCount != 8 {
+            showingScore = true
+        } else {
+            showingGrandResult = true
+        }
+        
+        return flagTappedResult
     }
     
     func askQuestion() {
         countries.shuffle()
         correctAnswer = Int.random(in: 0...2)
+    }
+    
+    func reset() {
+        score = 0
+        answerCount = 0
+        askQuestion()
     }
     
 }
