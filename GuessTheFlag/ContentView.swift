@@ -45,6 +45,10 @@ struct ContentView: View {
     @State private var answerState = false
     @State private var answerCount = 0
     @State private var showingGrandResult = false
+    @State private var selectedButton:Int = -1
+    @State private var buttonOppacity = 1.0
+    @State private var scaleSize = 1.0
+    ///@State private var animationAmount = 0.0
     
     var body: some View {
         ZStack{
@@ -78,22 +82,32 @@ struct ContentView: View {
                     ForEach(0..<3) { number in
                         Button {
                             self.answerState = flagTapped(number)
-                            
+        
                         } label: {
                             FlagImage(country: countries[number])
                         }
+                        
+                        .rotation3DEffect(.degrees(selectedButton==number ? 360: 0), axis: (x:0, y:1, z:0))
+                        .opacity(selectedButton==number ? 1.0 : buttonOppacity)
+                        .scaleEffect(selectedButton==number ? 1.0 : scaleSize)
                     }
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 20)
                 .background(.regularMaterial)
                 .clipShape(.rect(cornerRadius: 20))
+                
             }
             .padding()
         }
         
         .alert(scoreTitle,isPresented: $showingScore) {
-            Button("Continue", action: askQuestion)
+            Button("Continue"){
+                askQuestion() 
+                selectedButton = -1
+                buttonOppacity = 1.0
+                scaleSize = 1.0
+            }
         } message: {
             if answerState {
                 Text("Your score is \(score)")
@@ -103,7 +117,12 @@ struct ContentView: View {
         }
         
         .alert("Finished !", isPresented: $showingGrandResult) {
-            Button("Restart", action: reset)
+            Button("Restart") {
+                reset()
+                selectedButton = -1
+                buttonOppacity = 1.0
+                scaleSize = 1.0
+            }
         } message: {
             Text("Your score is \(score)")
                 .font(.subheadline.weight(.semibold))
@@ -113,6 +132,14 @@ struct ContentView: View {
     
     func flagTapped(_ number: Int) -> Bool {
         answerCount += 1
+        
+        withAnimation {
+            selectedButton = number
+            buttonOppacity = 0.25
+            scaleSize = 0.50
+        }
+        
+        
         var flagTappedResult = false
         
         if number == correctAnswer {
@@ -130,13 +157,13 @@ struct ContentView: View {
         } else {
             showingGrandResult = true
         }
-        
         return flagTappedResult
     }
     
     func askQuestion() {
         countries.shuffle()
         correctAnswer = Int.random(in: 0...2)
+        
     }
     
     func reset() {
